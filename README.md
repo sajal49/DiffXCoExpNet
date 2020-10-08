@@ -1,2 +1,2 @@
 # DiffXTablesCoexpnet
-An R package to builds discrete co-expression and differential co-expression networks
+An R package to build discrete co-expression and differential co-expression networks
