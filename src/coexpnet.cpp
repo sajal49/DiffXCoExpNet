@@ -5,6 +5,8 @@
 #include <boost/thread.hpp>
 #include <mlpack/methods/kmeans/kmeans.hpp>
 #include <RcppArmadillo.h>
+#include "Joint_Grid.h"
+#include "Clusters.h"
 
 /*
  * Slave -- Parallel discrete coexpression network builder that works with continuous values.
@@ -44,6 +46,8 @@ void coexpnet_thread(const frame<double> & children,
                      const vec<int> & k,
                      vec<stat_collector> & sc){
   
+  using namespace mlpack::kmeans;
+  
   // dims for input parents
   int nparents = parents.size();
   int nchildren_t = c_indices.size();
@@ -54,8 +58,10 @@ void coexpnet_thread(const frame<double> & children,
   // temporary frame
   frame<double> temp_frame;
   
+  // temporary vector
+  vec<double> temp_vec;
+  
   // temporary variables for kmeans
-  size_t clusters;
   arma::Row<size_t> assignments;
   
   // temporary variables for stat collection
@@ -91,11 +97,6 @@ void coexpnet_thread(const frame<double> & children,
           temp_frame.push_back(parents[i]);
           temp_frame.push_back(children[c_indices[c]])
           
-          // create an arma matrix consisting data
-          arma::mat data(temp_frame);
-          
-          KMeans<> k(500);
-          k.Cluster(data, clusters, assignments);
           
         }
         
@@ -144,8 +145,8 @@ void coexpnet_thread(const frame<double> & children,
  * 
  */
 
-vec<stat_collector> coexpnet(const frame<ldouble> & children, 
-                             const frame<ldouble> & parents, 
+vec<stat_collector> coexpnet(const frame<double> & children, 
+                             const frame<double> & parents, 
                              const vec<std::string> & c_names,
                              const vec<std::string> & p_names,
                              const vec<int> & k,

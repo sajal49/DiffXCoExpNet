@@ -1,3 +1,11 @@
+//
+// Created by Sajal Kumar.
+//
+// Copyright (c) NMSU Song lab
+
+#ifndef DIFFXTABLES_COEXPNET_H
+#define DIFFXTABLES_COEXPNET_H
+
 #include <vector>
 #include <string>
 #include <cmath>
@@ -13,6 +21,7 @@
 #include <boost/numeric/ublas/io.hpp>
 
 namespace ublas = boost::numeric::ublas;
+using std::vector;
 
 // data structures
 // #if defined _WIN32
@@ -33,19 +42,19 @@ struct stat_collector{
 
 // Generic frame: vector of vector
 template <typename T>
-using frame = std::vector<std::vector<T> >;
+using frame = vector<vector<T> >;
 
 // Generic vector
 template <typename T>
-using vec = std::vector<T>;
+using vec = vector<T>;
 
 // Generic ublas matrix
 template <typename T>
-using arma_frame = boost::numeric::ublas::matrix<T>;
+using ublas_frame = ublas::matrix<T>;
 
 // Generic ublas vector
 template <typename T>
-using ublas_vec = boost::numeric::ublas::vector<T>;
+using ublas_vec = ublas::vector<T>;
 
 // utility functions
 // Get rowsum, colsum and totalsum for a given table
@@ -58,15 +67,8 @@ frame<int> PoolTables(const vec<frame<int > > & obs);
 frame<mydouble> pchisq_expec(const frame<int> & obs, const vec<int> & rowsums, const vec<int> & colsums,
                              int totsum);
 
-// Get functional chi-square expected table
-frame<mydouble> fchisq_expec(const frame<int> & obs, const vec<int> & rowsums);
-
-// Get comparative chi-square expected table
-frame<mydouble> cpchisq_expec(const frame<int> & pooled_obs, const vec<int> & pooled_rowsums,
-                              const vec<int> & pooled_colsums, int pooled_sum, int t_sum);
-
 // a faster table function
-frame<int> tableCpp(std::vector<int> x_vec, std::vector<int> y_vec, int xlevels, int ylevels);
+frame<int> tableCpp(vector<int> x_vec, vector<int> y_vec, int xlevels, int ylevels);
 
 // function to print tables
 template <typename T>
@@ -94,14 +96,26 @@ void print_tableCpp(frame<T> table){
 
 }
 
-// Functional chi-squared statistic for co-expression network
-mydouble funchisq(const std::vector<std::vector<int> > & O, mydouble & p_value, mydouble & estimate);
-
 // Pearson's chi-squared statistic for co-expression network
-mydouble chisq(const std::vector<std::vector<int> > & O, mydouble & p_value, mydouble & estimate);
+double chisq(const vector<vector<int> > & O, ldouble & p_value, double & estimate);
 
-// Comparative chi-squared statistic for differential co-expression network
-mydouble cpchisq(const vec<frame<int > > & obs, mydouble & p_value);
+
+// Slave process -- Discrete co-expression network that discretizes continuous variables on the fly
+void coexpnet_thread(const frame<double> & children, 
+                     const frame<double> & parents, 
+                     const vec<std::string> & c_names,
+                     vec<int> c_indices, 
+                     const vec<std::string> & p_names,
+                     const vec<int> & k,
+                     vec<stat_collector> & sc);
+
+// Master process -- Discrete co-expression network that discretizes continuous variables on the fly
+vec<stat_collector> coexpnet(const frame<double> & children, 
+                             const frame<double> & parents, 
+                             const vec<std::string> & c_names,
+                             const vec<std::string> & p_names,
+                             const vec<int> & k,
+                             int nthreads);
 
 // Discrete Coexpression network
 void discrete_coexpnet_thread(const frame<int> & children, const frame<int> & parents, const vec<std::string> & c_names,

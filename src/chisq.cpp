@@ -1,8 +1,8 @@
 #include "methods.h"
 
-ldouble chisq(const frame<int> & O, ldouble & p_value, ldouble & estimate){
+double chisq(const frame<int> & O, ldouble & p_value, double & estimate){
 
-  ldouble chsq = 0.0;
+  double chsq = 0.0;
 
   if (O.size() == 0) { // if number of rows is 0 then return 0.
     return chsq;
@@ -25,7 +25,7 @@ ldouble chisq(const frame<int> & O, ldouble & p_value, ldouble & estimate){
   }
 
   // get expected
-  frame<ldouble> eij = pchisq_expec(O, rowsums, colsums, n);
+  frame<double> eij = pchisq_expec(O, rowsums, colsums, n);
 
   size_t df = 0; // degrees of freedom
 
@@ -44,7 +44,7 @@ ldouble chisq(const frame<int> & O, ldouble & p_value, ldouble & estimate){
   }
 
   // compute estimate -- Cramer's V
-  ldouble maxchsq = 0.0;
+  double maxchsq = 0.0;
   if(nrows < ncols){
     maxchsq = (n * (nrows - 1));
   } else {

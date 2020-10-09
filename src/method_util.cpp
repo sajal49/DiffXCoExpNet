@@ -3,7 +3,7 @@
 frame<int> PoolTables(const vec<frame<int > > & obs){
 
   // pooled table
-  frame<int> pooled_table(obs[0].size(), std::vector<int>(obs[0][0].size(), 0));
+  frame<int> pooled_table(obs[0].size(), vector<int>(obs[0][0].size(), 0));
 
   // cell-wise addition of all observed tables
   for(int i=0; i<obs.size(); i++){ //experimental conditions
@@ -43,61 +43,25 @@ void DimSums(const frame<int> & O, vec<int> & rowsums, vec<int> & colsums, int &
   return;
 }
 
-frame<ldouble> pchisq_expec(const frame<int> & obs, const vec<int> & rowsums, const vec<int> & colsums,
-                             int totsum){
+frame<double> pchisq_expec(const frame<int> & obs, const vec<int> & rowsums, const vec<int> & colsums,
+                           int totsum){
 
   // get dims
   int rows = obs.size();
   int cols = obs[0].size();
 
   // get expected
-  frame<ldouble> expec(rows, vec<ldouble>(cols, 0.0));
+  frame<double> expec(rows, vec<double>(cols, 0.0));
 
   for(size_t i=0; i<rows; i++){
     for(size_t j=0; j<cols; j++){
-      expec[i][j] = ((ldouble)rowsums[i]*(ldouble)colsums[j])/totsum;
+      expec[i][j] = ((double)rowsums[i]*(double)colsums[j])/totsum;
     }
   }
 
   return expec;
 }
 
-frame<ldouble> fchisq_expec(const frame<int> & obs, const vec<int> & rowsums){
-
-  // get dims
-  int rows = obs.size();
-  int cols = obs[0].size();
-
-  // get expected
-  frame<ldouble> expec(rows, vec<ldouble>(cols, 0.0));
-
-  for(size_t i=0; i<rows; i++){
-    for(size_t j=0; j<cols; j++){
-      expec[i][j] = ((ldouble)rowsums[i]/cols);
-    }
-  }
-
-  return expec;
-}
-
-frame<ldouble> cpchisq_expec(const frame<int> & pooled_obs, const vec<int> & pooled_rowsums,
-                              const vec<int> & pooled_colsums, int pooled_sum, int t_sum){
-
-  // get dims
-  int rows = pooled_obs.size();
-  int cols = pooled_obs[0].size();
-
-  // get expected
-  frame<ldouble> expec(rows, vec<ldouble>(cols, 0.0));
-
-  for(size_t i=0; i<rows; i++){
-    for(size_t j=0; j<cols; j++){
-      expec[i][j] = ((ldouble)pooled_rowsums[i]*(ldouble)pooled_colsums[j]*(ldouble)t_sum)/pooled_sum;
-    }
-  }
-
-  return expec;
-}
 
 void fill_stat_collector(stat_collector & sc, int pindex, int cindex, std::string pname, 
                          std::string cname, ldouble pvalue, ldouble estimate){
@@ -111,7 +75,88 @@ void fill_stat_collector(stat_collector & sc, int pindex, int cindex, std::strin
   
 }
 
-frame<int> tableCpp(std::vector<int> x_vec, std::vector<int> y_vec, int xlevels, int ylevels) {
+vec<int> GetClusterAssignments(const vector<vector<double>> & _data, int cluster, int epoch=-1){
+  
+  // if epoch == -1 then use default epoch
+  if(epoch == -1){
+    KMeans<> kobj();  
+  } else { // otherwise specify the number of epoch
+    KMeans<> kobj(epoch);
+  }
+  
+  // create an arma matrix from _data
+  arma::mat data(_data);
+  
+  // prepare a container for cluster labels
+  arma::Row<size_t> assignments;
+  
+  // apply kmeans
+  kobj.Cluster(data, (size_t)cluster, assignments);
+  
+  // return the assignments in correct format
+  return arma::conv_to<vector<int>>>::from(assignments);
+}
+
+
+frame<int> ApplyGOC(const vec<int> & assignments, const frame<double> & _data, int cluster, int min_levels=2){
+  
+  
+  // prepare clusters
+  Cluster clust_obj(cluster, assignments, _data);
+  
+  // get grid lines (with minimum levels 2)
+  frame<double> grid_lines = Find_Grid(clust_obj, min_levels);
+  
+  // discretize each variable
+  
+}
+
+
+discretize_data = function(data, gridlines){
+  
+# use gridlines for each dimension
+  for(i in 1:ncol(data)){
+    
+    if(length(unique(gridlines))==0){
+      discr = rep(1, nrow(data))
+    }else{
+      discr = rep(length(gridlines[[i]])+1, nrow(data))
+      gridlines[[i]] = sort(gridlines[[i]])
+      for(j in 1:length(gridlines[[i]])){ # determine discretization levels
+        if(j == 1) {
+          discr[data[,i] < gridlines[[i]][j]] = 1
+        } else {
+          discr[data[,i] < gridlines[[i]][j] & data[,i] >= gridlines[[i]][j-1]] = j
+        }
+      }
+    }
+    data[,i] = discr
+  }
+  
+  return(data)
+}
+
+frame<int> DiscretizeData(const frame<double> & grid_lines, const frame<double> & _data){
+  
+  // discretize each dimension using grid_lines
+  frame<int> _Ddata(_data.size(), vec<int>(_data[0].size(), 0));
+  vec<int> temp_vec;
+  for(int j=0; j<_data.size(); j++){
+    
+    if(std::unique(grid_lines[j]).size() > 0){
+      
+      std::sort(grid_lines[j].beg(), grid_lines[j].end());
+      
+      for(int )
+      
+    }
+    
+  }
+  
+}
+
+
+frame<int> tableCpp(vector<int> x_vec, vector<int> y_vec, int xlevels, int ylevels) {
 
   int min_val_x = INT_MAX, min_val_y = INT_MAX, max_val_x = INT_MIN, max_val_y = INT_MIN;
 
@@ -164,7 +209,7 @@ frame<int> tableCpp(std::vector<int> x_vec, std::vector<int> y_vec, int xlevels,
 
   // ASSUMPTION : tables are already offset by 1 if xlevels and ylevels are provided
 
-  std::vector<std::vector<int > > table(xlevels, std::vector<int>(ylevels,0));
+  vector<vector<int > > table(xlevels, vector<int>(ylevels,0));
 
   for(int i=0; i<x_vec.size(); i++)
     table[x_vec[i]][y_vec[i]]++;

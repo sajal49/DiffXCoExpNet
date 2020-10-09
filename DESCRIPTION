@@ -1,35 +1,34 @@
-Package: GridOnClusters
+Package: DiffXTablesCoexpnet
 Type: Package
-Title: Cluster-Preserving Multivariate Joint Grid Discretization
-Version: 0.0.8
-Date: 2020-09-15
+Title: Building discrete co-expression and differential co-expression networks
+Version: 0.0.1
+Date: 2020-10-07
 Authors@R: 
-    c(person(given = "Jiandong",
-             family = "Wang",
-             role = "aut",
-             email = "wangjd24@nmsu.edu"),
-      person(given = "Sajal",
+    c(person(given = "Sajal",
              family = "Kumar",
              role = "aut",
              email = "sajal49@nmsu.edu",
              comment = c(ORCID = "0000-0003-0930-1582")),
+      person(given = "Ruby",
+             family = "Sharma",
+             role = "aut",
+             email = "ruby49@nmsu.edu",
+             comment = c(ORCID = "0000-0001-7774-4065")),
       person(given = "Joe",
              family = "Song",
              role = c("aut", "cre"),
              email = "joemsong@cs.nmsu.edu",
              comment = c(ORCID = "0000-0002-6883-6547")))
-Author: Jiandong Wang [aut],
-  Sajal Kumar [aut] (<https://orcid.org/0000-0003-0930-1582>),
+Author: Sajal Kumar [aut] (<https://orcid.org/0000-0003-0930-1582>),
+  Ruby Sharma [aut] (<https://orcid.org/0000-0001-7774-4065>),
   Joe Song [aut, cre] (<https://orcid.org/0000-0002-6883-6547>)
 Maintainer: Joe Song <joemsong@cs.nmsu.edu>
-Description: Discretize multivariate continuous data using a grid
-    that captures the joint distribution via preserving clusters in
-    the original data (Wang et al. 2020). Joint grid discretization
-    is applicable as a data transformation step to prepare data for
-    model-free inference of association, function, or causality.
-Imports: Rcpp, cluster, fossil, dqrng, Rdpack, plotrix
-Suggests: Ckmeans.1d.dp, FunChisq, knitr, testthat (>= 2.1.0),
-        rmarkdown
+Description: A software tool to build discrete differential co-expression networks based on the 
+             novel Sharma-Song test of pattern heterogeneity. The tool also builds discrete
+             co-expression networks based on the Pearson's chi-squared test.
+Imports: Rcpp, cluster, fossil, dqrng, Rdpack, plotrix, RcppArmadillo
+Suggests: Ckmeans.1d.dp, GridOnClusters, DiffXTables, FunChisq, knitr, 
+          testthat (>= 2.1.0), rmarkdown 
 Depends: R (>= 3.0)
 RdMacros: Rdpack
 License: LGPL (>= 3)

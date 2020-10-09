@@ -1,11 +1,12 @@
 //
 // Created by Jiandong Wang on 2/15/20.
+// Modified by Sajal Kumar on 10/07/20.
 //
 // Copyright (c) NMSU Song lab
 
 
-#ifndef JOINT_GRID_CLUSTERS_H
-#define JOINT_GRID_CLUSTERS_H
+#ifndef DIFFXTABLES_COEXPNET_H
+#define DIFFXTABLES_COEXPNET_H
 
 
 #include <vector>
@@ -16,21 +17,13 @@
 #include <assert.h>
 #include <math.h>
 
-
-using namespace std;
-
-const int DEBUG = 1;
+using std::vector;
 
 struct grid {
     vector<vector<double> > lines;
     vector<int> num_lines;
 };
 
-//struct cluster {
-//    vector<double[2]> *points;
-//    double *centers[2];
-//    int size = 0;
-//};
 
 class Cluster {
 private:
@@ -69,4 +62,4 @@ public:
 };
 
 
-#endif //JOINT_GRID_CLUSTERS_H
+#endif //DIFFXTABLES_COEXPNET_H
