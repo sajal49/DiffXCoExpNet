@@ -1,8 +1,8 @@
 //
 // Created by Jiandong Wang on 2/14/20.
 //
+// Modified by Sajal Kumar
 // Copyright (c) NMSU Song lab
-
 
 #ifndef JOINT_GRID_JOINT_GRID_H
 #define JOINT_GRID_JOINT_GRID_H
@@ -10,12 +10,10 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <assert.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
 #include <climits>
-
 #include "Clusters.h"
-
 using namespace std;
 
 vector< vector<double > > Find_Grid(Cluster &clusters, int min_bin_limit = 2);

@@ -1,6 +1,7 @@
 //
 // Created by Jiandong Wang on 2/15/20.
 //
+// Modified by Sajal Kumar
 // Copyright (c) NMSU Song lab
 
 
@@ -25,7 +26,7 @@ vector<vector<double> > Find_Grid(Cluster &clusters, int min_bin_limit) {
 vector<double> Find_1D_Grid(Cluster &clusters, int dim_input, int min_bin_limit) {
     int dim = dim_input;
     vector<int> order = clusters.sort_clusters(dim);
-    vector<double> lines(order.size(), ULONG_MAX);
+    vector<double> lines(order.size(), std::numeric_limits<double>::max());
 
     if (order.size() == 0) {
         return lines;

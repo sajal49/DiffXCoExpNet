@@ -1,12 +1,12 @@
 //
 // Created by Jiandong Wang on 2/15/20.
-// Modified by Sajal Kumar on 10/07/20.
+// Modified by Sajal Kumar.
 //
 // Copyright (c) NMSU Song lab
 
 
-#ifndef DIFFXTABLES_COEXPNET_H
-#define DIFFXTABLES_COEXPNET_H
+#ifndef GOC_CLUSTERS_H
+#define GOC_CLUSTERS_H
 
 
 #include <vector>
@@ -14,8 +14,8 @@
 #include <algorithm>
 #include <string>
 #include <numeric>
-#include <assert.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
 
 using std::vector;
 
@@ -34,9 +34,9 @@ private:
 
     grid grids;
 
-    Cluster(vector<vector<double> > medians);
+    Cluster(const vector<vector<double> >& medians);
 
-    Cluster(vector<vector<double> > medians, vector<vector<vector<double> > > data);
+    Cluster(const vector<vector<double> >& medians, vector<vector<vector<double> > > data);
 public:
     Cluster(vector<int> labels, vector<vector<double> > medians, vector<vector<double> > data);
 
@@ -62,4 +62,4 @@ public:
 };
 
 
-#endif //DIFFXTABLES_COEXPNET_H
+#endif //GOC_CLUSTERS_H

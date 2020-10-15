@@ -5,19 +5,20 @@
 // Copyright (c) NMSU Song lab
 
 #include "Clusters.h"
+#include <utility>
 
 // testing purpose only
-Cluster::Cluster(vector<vector<double> > medians) {
+Cluster::Cluster(const vector<vector<double> >& medians) {
     this->num_clusters = medians.size();
     this->cluster_medians = medians;
 }
 
 
 // testing purpose only
-Cluster::Cluster(vector<vector<double> > medians, vector<vector<vector<double> > > data) {
+Cluster::Cluster(const vector<vector<double> >& medians, vector<vector<vector<double> > > data) {
     this->num_clusters = medians.size();
     this->cluster_medians = medians;
-    this->cluster_points = data;
+    this->cluster_points = std::move(data);
 }
 
 Cluster::Cluster(int k, vector<int> labels, vector<vector<double> > data) {
@@ -28,8 +29,8 @@ Cluster::Cluster(int k, vector<int> labels, vector<vector<double> > data) {
                                                             vector<vector<double>>(dims, vector<double>(0)));
 
     // get clusters
-    vector<int>::iterator label_iter = labels.begin();
-    vector<vector<double> >::iterator data_iter = data.begin();
+    auto label_iter = labels.begin();
+    auto data_iter = data.begin();
     //loop for clusters
     for (; label_iter != labels.end() and data_iter != data.end(); ++label_iter, ++data_iter) {
         //loop for dimensions
@@ -40,14 +41,14 @@ Cluster::Cluster(int k, vector<int> labels, vector<vector<double> > data) {
 
     //calculate median
     this->cluster_medians = vector<vector<double> >(this->num_clusters, vector<double>(dims, 0));
-    double mid = 0;
-    double mid_index = 0;
+    double mid;
+    double mid_index;
     for (int i = 0; i < this->num_clusters; ++i) {
         for (int j = 0; j < dims; ++j) {
             vector<double> temp = this->cluster_points[i][j];
             sort(temp.begin(), temp.end());
             if (temp.size() % 2 == 0) {//mid_point is in between
-                mid_index = temp.size() / 2;
+                mid_index = (double) temp.size() / 2;
                 mid = (temp[mid_index] + temp[mid_index - 1]) / 2.0;
             } else {//mid_point is in data
                 mid_index = temp.size() / 2.0;
@@ -66,8 +67,8 @@ Cluster::Cluster(vector<int> labels, vector<vector<double> > medians, vector<vec
                                                             vector<vector<double>>(dims, vector<double>(0)));
 
     // get clusters
-    vector<int>::iterator label_iter = labels.begin();
-    vector<vector<double> >::iterator data_iter = data.begin();
+    auto label_iter = labels.begin();
+    auto data_iter = data.begin();
     //loop for clusters
     for (; label_iter != labels.end() and data_iter != data.end(); ++label_iter, ++data_iter) {
         //loop for dimensions
@@ -96,7 +97,7 @@ vector<double> Cluster::get_medians(int index) {
 }
 
 void Cluster::set_grids(grid G) {
-    this->grids = G;
+    this->grids = std::move(G);
 }
 
 grid Cluster::get_grids() {

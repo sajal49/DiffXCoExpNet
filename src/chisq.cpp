@@ -1,3 +1,6 @@
+// Created by Sajal Kumar
+// Copyright (c) NMSU Song lab
+
 #include "methods.h"
 
 double chisq(const frame<int> & O, ldouble & p_value, double & estimate){
@@ -27,7 +30,7 @@ double chisq(const frame<int> & O, ldouble & p_value, double & estimate){
   // get expected
   frame<double> eij = pchisq_expec(O, rowsums, colsums, n);
 
-  size_t df = 0; // degrees of freedom
+  size_t df; // degrees of freedom
 
   // compute chisq
   for (size_t i=0; i<nrows; ++i) {
@@ -44,11 +47,11 @@ double chisq(const frame<int> & O, ldouble & p_value, double & estimate){
   }
 
   // compute estimate -- Cramer's V
-  double maxchsq = 0.0;
+  double maxchsq;
   if(nrows < ncols){
-    maxchsq = (n * (nrows - 1));
+    maxchsq = (n * (int)(nrows - 1));
   } else {
-    maxchsq = (n * (ncols - 1));
+    maxchsq = (n * (int)(ncols - 1));
   }
 
   if(maxchsq > 0) {

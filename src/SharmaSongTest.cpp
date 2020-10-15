@@ -1,14 +1,17 @@
+// Created by Sajal Kumar
+// Copyright (c) NMSU Song lab
+
 #include "methods.h"
-#include <RcppArmadillo.h>
+#include <armadillo>
 
 // Sharma-Song test implementation
 // Given 'k' contingency tables representing 'k' experimental conditions
 // the Sharma-Song test returns the amount of second order difference between the tables
-mydouble SharmaSongTest(const std::vector<frame<int > > & tables, mydouble & pvalue, mydouble & estimate){
+ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalue, double & estimate){
 
   int k = tables.size(), total_sum=0;
   int temp;
-  mydouble stat = 0;
+  ldouble stat = 0;
   // Get independent standard normal variables vectors and sample sizes for each table
   vec<int> ssizes(k);
   std::vector<ublas_vec<double > > emat = get_e_matrix(tables, ssizes);
@@ -121,60 +124,6 @@ mydouble SharmaSongTest(const std::vector<frame<int > > & tables, mydouble & pva
 
 }
 
-// Conserved test implementation
-// Given 'k' contingency tables representing 'k' experimental conditions
-// the conserved test returns the amount of second order similarity between the tables
-mydouble ConservedTest(const std::vector<frame<int > > & tables, mydouble & pvalue, mydouble & estimate){
-
-  int k = tables.size(), n = 0;
-  mydouble chisq=0;
-
-  // get pooled table
-  frame<int > pooled_table = PoolTables(tables);
-
-  int nrows = pooled_table.size();
-  int ncols = pooled_table[0].size();
-  std::vector<int > rowsum(nrows, 0);
-  std::vector<int > colsum(ncols, 0);
-
-  // get dim sums for pooled table
-  DimSums(pooled_table, rowsum, colsum, n);
-
-  // get chisq expected for the pooled table
-  frame<mydouble > expec_table = pchisq_expec(pooled_table, rowsum, colsum, n);
-
-  // compute Pearson's chi-squared test for the pooled table
-  for(int i=0; i<nrows; i++){
-    for(int j=0; j<ncols; j++){
-      if(expec_table[i][j] != 0){
-        chisq += (pow(pooled_table[i][j] - expec_table[i][j], 2))/expec_table[i][j];
-      }
-    }
-  }
-
-  // degrees of freedom
-  size_t df = (nrows - 1) * (ncols - 1);
-
-  // min dim
-  int min_dim = nrows - 1;
-  if( min_dim > ncols - 1){
-    min_dim = ncols - 1;
-  }
-
-  // chi-squared p-value
-  boost::math::chi_squared conserved_dist(df);
-  if(isnan(chisq)){
-    chisq = 0;
-  }
-  pvalue = boost::math::cdf(boost::math::complement(conserved_dist, chisq));
-
-  // Cramer V effect size
-  estimate = sqrt(chisq/(n * min_dim));
-
-  return chisq;
-
-}
-
 
 // given tables under different experimental conditions, obtain standard normal vectors
 std::vector<ublas_vec<double > > get_e_matrix(const std::vector<frame<int > > & tables, vec<int> & ssizes){
@@ -187,7 +136,7 @@ std::vector<ublas_vec<double > > get_e_matrix(const std::vector<frame<int > > & 
   int ncols = tables[0][0].size();
 
   // temporary data-structures needed
-  frame<mydouble> temp_expec(nrows, vec<mydouble>(ncols, 0));
+  frame<double> temp_expec(nrows, vec<double>(ncols, 0));
   ublas_frame<double> temp_A(nrows, ncols, 0);
   vec<int> temp_rowsum(nrows);
   vec<int> temp_colsum(ncols);
