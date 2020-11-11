@@ -49,6 +49,7 @@ void discrete_diffcoexpnet_thread(const frame<int> & exp_matr,
     // temporary variables for stat collection
     double estimate=0, stat=0;
     ldouble pvalue=1;
+    size_t df;
 
     for(int i=0; i<int_index.size(); i++){
 
@@ -61,7 +62,7 @@ void discrete_diffcoexpnet_thread(const frame<int> & exp_matr,
         }
 
         // Apply SharmaSong on tables
-        stat = SharmaSongTest(tables, pvalue, estimate);
+        stat = SharmaSongTest(tables, pvalue, estimate, df);
 
         // update results
         fill_stat_collector(sc[int_index[i]], indices[0][int_index[i]], indices[1][int_index[i]],
@@ -108,9 +109,9 @@ vec<stat_collector> discrete_diffcoexpnet(const frame<int> & exp_matr,
         nthreads = true_threads;
     }
 
-    if(nthreads < 2) {
-        std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
-    }
+    // if(nthreads < 2) {
+    //     std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
+    // }
 
     // create threads
     boost::thread_group threads;
@@ -209,7 +210,8 @@ void diffcoexpnet_thread(const frame<double> & exp_matr,
     // temporary variables for stat collection
     double estimate=0, stat=0;
     ldouble pvalue=1;
-    int temp_k_min, temp_k_max;
+    size_t df;
+    int temp_k_min, temp_k_max, unq;
 
     // temporary arma mat for all pairs
     arma::mat temp_pair_data(2, exp_matr[0].size());
@@ -247,121 +249,133 @@ void diffcoexpnet_thread(const frame<double> & exp_matr,
     frame<double> std_exp_matr = Join_expr_matr_by_conds(cond_exp_matr, exp_conds, exp_matr[0].size());
 
     for(int i=0; i<int_index.size(); i++){
-
+       
         // create data
         create_pair_data(temp_RData, std_exp_matr[indices[0][int_index[i]]],
                          std_exp_matr[indices[1][int_index[i]]]);
 
-        for(int mi=0; mi<temp_RData[0].size(); mi++){
-            for(int mj=0; mj<temp_RData.size(); mj++){
-                temp_pair_data(mi,mj) = temp_RData[mj][mi];
-            }
-        }
+        // find the number of unique samples
+        unq = FindUniqueSamples(temp_RData);
 
-        // if size of k is 2 then it specifies the maximum and minimum range.
-        // if size of k is 1 then it specifies the maximum range
-        if(k.size() == 2 || k.size() == 1){
+        // if there is only one unique sample, no need to proceed
+        if( unq == 1 ){
 
-            // get distance matrix
-            dist_mat = DistMat(temp_RData);
+            fill_stat_collector(sc[int_index[i]], indices[0][int_index[i]], indices[1][int_index[i]],
+                                gnames[indices[0][int_index[i]]], gnames[indices[1][int_index[i]]], 1,
+                                0);
+        } else {
 
-            // default k
-            temp_k_min = 2;
-            temp_k_max = 2;
-
-            // determine minimum and maximum k
-            if(k.size() == 1){
-
-                // we will change temp_k_max iff the number of points
-                // are larger than 10
-                if( temp_RData.size() > 10 ){
-                    if ((int) (temp_RData.size() / 5) < k[0]){
-                        temp_k_max = (int) (temp_RData.size() / 5);
-                    } else {
-                        temp_k_max = k[0];
-                    }
-                }
-
-            } else {
-
-                // we will change temp_k_min and temp_k_max iff the number of points
-                // are larger than 10
-                if(temp_RData.size() > 10){
-                    if ((int) (temp_RData.size() / 5) < k[0]){
-                        temp_k_min = (int) (temp_RData.size() / 5);
-                    } else {
-                        temp_k_min = k[0];
-                    }
-
-                    if ((int) (temp_RData.size() / 5) < k[1]){
-                        temp_k_max = (int) (temp_RData.size() / 5);
-                    } else {
-                        temp_k_max = k[1];
-                    }
-
+            for(int mi=0; mi<temp_RData[0].size(); mi++){
+                for(int mj=0; mj<temp_RData.size(); mj++){
+                    temp_pair_data(mi,mj) = temp_RData[mj][mi];
                 }
             }
 
-            best_k = temp_k_min;
-            best_sil_score = (double)(-INT_MAX);
+            // if size of k is 2 then it specifies the maximum and minimum range.
+            // if size of k is 1 then it specifies the maximum range
+            if(k.size() == 2 || k.size() == 1){
 
-            // find the optimal k using Silhouette score
-            for(int m=temp_k_min; m<=temp_k_max; m++){
+                // get distance matrix
+                dist_mat = DistMat(temp_RData);
+
+                // default k
+                temp_k_min = 2;
+                temp_k_max = 2;
+
+                // determine minimum and maximum k
+                if(k.size() == 1){
+
+                    // we will change temp_k_max iff the unique number of points
+                    // are larger than 10
+                    if( unq > 10 ){
+                        if ((int) (unq / 5) < k[0]){
+                            temp_k_max = (int) (unq / 5);
+                        } else {
+                            temp_k_max = k[0];
+                        }
+                    }
+
+                } else {
+
+                    // we will change temp_k_min and temp_k_max iff the unique number of points
+                    // are larger than 10
+                    if(unq > 10){
+                        if ((int) (unq / 5) < k[0]){
+                            temp_k_min = (int) (unq / 5);
+                        } else {
+                            temp_k_min = k[0];
+                        }
+
+                        if ((int) (unq / 5) < k[1]){
+                            temp_k_max = (int) (unq / 5);
+                        } else {
+                            temp_k_max = k[1];
+                        }
+
+                    }
+                }
+
+                best_k = temp_k_min;
+                best_sil_score = (double)(-INT_MAX);
+
+                // find the optimal k using Silhouette score
+                for(int m=temp_k_min; m<=temp_k_max; m++){
+
+                    // get cluster assignments
+                    temp_classn = GetClusterAssignments(temp_pair_data, m);
+
+                    // get Silhouette score for each observation
+                    sil_scores = silhouette_score(temp_classn, dist_mat);
+
+                    // obtain mean Silhouette score
+                    mean_sil_score = GetSilMeanScore(sil_scores);
+
+                    // obtain best sil score / best k
+                    if(best_sil_score <= mean_sil_score){
+                        best_sil_score = mean_sil_score;
+                        best_k = m;
+                    }
+                }
+
+                // finally apply GOC using the best k
+                // get cluster assignments
+                temp_classn = GetClusterAssignments(temp_pair_data, best_k);
+
+                // get discretized data
+                temp_Ddata = ApplyGOC(temp_classn, temp_RData, best_k);
+
+            } else if(k.size() == indices[0].size()){
+                // if size of k is the same as the total number of interactions, then it specifies the exact k
+                // for each combination
 
                 // get cluster assignments
-                temp_classn = GetClusterAssignments(temp_pair_data, m);
+                temp_classn = GetClusterAssignments(temp_pair_data, k[int_index[i]]);
 
-                // get Silhouette score for each observation
-                sil_scores = silhouette_score(temp_classn, dist_mat);
-
-                // obtain mean Silhouette score
-                mean_sil_score = GetSilMeanScore(sil_scores);
-
-                // obtain best sil score / best k
-                if(best_sil_score <= mean_sil_score){
-                    best_sil_score = mean_sil_score;
-                    best_k = m;
-                }
+                // get discretized data
+                temp_Ddata = ApplyGOC(temp_classn, temp_RData, k[int_index[i]]);
             }
 
-            // finally apply GOC using the best k
-            // get cluster assignments
-            temp_classn = GetClusterAssignments(temp_pair_data, best_k);
+            // segment discretized data
+            temp_cond_Ddata = Segment_expr_matr_by_conds(temp_Ddata, exp_conds, conds);
 
-            // get discretized data
-            temp_Ddata = ApplyGOC(temp_classn, temp_RData, best_k);
+            // construct tables by experimental conditions
+            for(int cnd = 0; cnd < exp_conds; cnd++){
+                tables[cnd] = tableCpp(temp_cond_Ddata[cnd][0],
+                                       temp_cond_Ddata[cnd][1],
+                                       (*std::max_element(temp_Ddata[0].begin(),
+                                                          temp_Ddata[0].end()))+1,
+                                       (*std::max_element(temp_Ddata[1].begin(),
+                                                          temp_Ddata[1].end()))+1);
+            }
 
-        } else if(k.size() == indices[0].size()){
-            // if size of k is the same as the total number of interactions, then it specifies the exact k
-            // for each combination
+            // Apply SharmaSong on tables
+            stat = SharmaSongTest(tables, pvalue, estimate, df);
 
-            // get cluster assignments
-            temp_classn = GetClusterAssignments(temp_pair_data, k[int_index[i]]);
-
-            // get discretized data
-            temp_Ddata = ApplyGOC(temp_classn, temp_RData, k[int_index[i]]);
+            // update results
+            fill_stat_collector(sc[int_index[i]], indices[0][int_index[i]], indices[1][int_index[i]],
+                                gnames[indices[0][int_index[i]]], gnames[indices[1][int_index[i]]], pvalue,
+                                estimate);
         }
-
-        // segment discretized data
-        temp_cond_Ddata = Segment_expr_matr_by_conds(temp_Ddata, exp_conds, conds);
-
-        // construct tables by experimental conditions
-        for(int cnd = 0; cnd < exp_conds; cnd++){
-            tables[cnd] = tableCpp(temp_cond_Ddata[cnd][0],
-                                   temp_cond_Ddata[cnd][1],
-                                   (*std::max_element(temp_Ddata[0].begin(),
-                                                    temp_Ddata[0].end()))+1,
-                                   (*std::max_element(temp_Ddata[1].begin(),
-                                                    temp_Ddata[1].end()))+1);
-        }
-
-        // Apply SharmaSong on tables
-        stat = SharmaSongTest(tables, pvalue, estimate);
-
-        // update results
-        fill_stat_collector(sc[int_index[i]], indices[0][int_index[i]], indices[1][int_index[i]],
-                            gnames[indices[0][int_index[i]]], gnames[indices[1][int_index[i]]], pvalue,
-                            estimate);
 
     }
 }
@@ -371,7 +385,7 @@ void diffcoexpnet_thread(const frame<double> & exp_matr,
  * Parameters
  *
  * exp_matr: A continuous sample x gene matrix representing
- * discrete levels of gene expression at given samples.
+ * gene expression at given samples.
  *
  * exp_conds: Total number of experimental conditions.
  *
@@ -407,9 +421,9 @@ vec<stat_collector> diffcoexpnet(const frame<double> & exp_matr,
         nthreads = true_threads;
     }
 
-    if(nthreads < 2) {
-        std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
-    }
+    // if(nthreads < 2) {
+    //     std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
+    // }
 
     // create threads
     boost::thread_group threads;

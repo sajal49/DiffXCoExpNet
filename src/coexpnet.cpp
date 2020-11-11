@@ -75,7 +75,7 @@ void coexpnet_thread(const frame<double> & children,
     // temporary variables for stat collection
     double stat, estimate;
     ldouble p_value = 1;
-    int effind, temp_k_min, temp_k_max;
+    int effind, temp_k_min, temp_k_max, unq;
 
     for(int c=0; c<nchildren_t; c++) {
 
@@ -95,104 +95,114 @@ void coexpnet_thread(const frame<double> & children,
                 // create data
                 create_pair_data(temp_RData, parents[i], children[c_indices[c]]);
 
-                for(int mi=0; mi<temp_RData[0].size(); mi++){
-                    for(int mj=0; mj<temp_RData.size(); mj++){
-                        temp_pair_data(mi,mj) = temp_RData[mj][mi];
-                    }
-                }
+                // find the number of unique samples
+                unq = FindUniqueSamples(temp_RData);
 
-                // if size of k is 2 then it specifies the maximum and minimum range.
-                // if size of k is 1 then it specifies the maximum range
-                if(k.size() == 2 || k.size() == 1){
+                // if there is only one unique sample, no need to proceed
+                if( unq == 1 ){
 
-                    // get distance matrix
-                    dist_mat = DistMat(temp_RData);
+                    fill_stat_collector(sc[effind], i, c_indices[c], p_names[i], c_names[c_indices[c]], 1, 0);
 
-                    // default k
-                    temp_k_min = 2;
-                    temp_k_max = 2;
+                } else {
 
-                    // determine minimum and maximum k
-                    if(k.size() == 1){
-
-                        // we will change temp_k_max iff the number of points
-                        // are larger than 10
-                        if( temp_RData.size() > 10 ){
-                            if ((int) (temp_RData.size() / 5) < k[0]){
-                                temp_k_max = (int) (temp_RData.size() / 5);
-                            } else {
-                                temp_k_max = k[0];
-                            }
-                        }
-
-                    } else {
-
-                        // we will change temp_k_min and temp_k_max iff the number of points
-                        // are larger than 10
-                        if(temp_RData.size() > 10){
-                            if ((int) (temp_RData.size() / 5) < k[0]){
-                                temp_k_min = (int) (temp_RData.size() / 5);
-                            } else {
-                                temp_k_min = k[0];
-                            }
-
-                            if ((int) (temp_RData.size() / 5) < k[1]){
-                                temp_k_max = (int) (temp_RData.size() / 5);
-                            } else {
-                                temp_k_max = k[1];
-                            }
-
+                    for(int mi=0; mi<temp_RData[0].size(); mi++){
+                        for(int mj=0; mj<temp_RData.size(); mj++){
+                            temp_pair_data(mi,mj) = temp_RData[mj][mi];
                         }
                     }
 
-                    best_k = temp_k_min;
-                    best_sil_score = (double)(-INT_MAX);
+                    // if size of k is 2 then it specifies the maximum and minimum range.
+                    // if size of k is 1 then it specifies the maximum range
+                    if(k.size() == 2 || k.size() == 1){
 
-                    // find the optimal k using Silhouette score
-                    for(int m=temp_k_min; m<=temp_k_max; m++){
+                        // get distance matrix
+                        dist_mat = DistMat(temp_RData);
+
+                        // default k
+                        temp_k_min = 2;
+                        temp_k_max = 2;
+
+                        // determine minimum and maximum k
+                        if(k.size() == 1){
+
+                            // we will change temp_k_max iff the unique number of points
+                            // are larger than 10
+                            if( unq > 10 ){
+                                if ((int) (unq / 5) < k[0]){
+                                    temp_k_max = (int) (unq / 5);
+                                } else {
+                                    temp_k_max = k[0];
+                                }
+                            }
+
+                        } else {
+
+                            // we will change temp_k_min and temp_k_max iff the unique number of points
+                            // are larger than 10
+                            if(unq > 10){
+                                if ((int) (unq / 5) < k[0]){
+                                    temp_k_min = (int) (unq / 5);
+                                } else {
+                                    temp_k_min = k[0];
+                                }
+
+                                if ((int) (unq / 5) < k[1]){
+                                    temp_k_max = (int) (unq / 5);
+                                } else {
+                                    temp_k_max = k[1];
+                                }
+
+                            }
+                        }
+
+                        best_k = temp_k_min;
+                        best_sil_score = (double)(-INT_MAX);
+
+                        // find the optimal k using Silhouette score
+                        for(int m=temp_k_min; m<=temp_k_max; m++){
+
+                            // get cluster assignments
+                            temp_classn = GetClusterAssignments(temp_pair_data, m);
+
+                            // get Silhouette score for each observation
+                            sil_scores = silhouette_score(temp_classn, dist_mat);
+
+                            // obtain mean Silhouette score
+                            mean_sil_score = GetSilMeanScore(sil_scores);
+
+                            // obtain best sil score / best k
+                            if(best_sil_score <= mean_sil_score){
+                                best_sil_score = mean_sil_score;
+                                best_k = m;
+                            }
+                        }
+
+                        // finally apply GOC using the best k
+                        // get cluster assignments
+                        temp_classn = GetClusterAssignments(temp_pair_data, best_k);
+
+                        // get discretized data
+                        temp_Ddata = ApplyGOC(temp_classn, temp_RData, best_k);
+
+                    } else if(k.size() == nparents * children.size()){
+                        // if size of k is nparents * nchildren, then it specifies the exact k for each combination
 
                         // get cluster assignments
-                        temp_classn = GetClusterAssignments(temp_pair_data, m);
+                        temp_classn = GetClusterAssignments(temp_pair_data, k[effind]);
 
-                        // get Silhouette score for each observation
-                        sil_scores = silhouette_score(temp_classn, dist_mat);
-
-                        // obtain mean Silhouette score
-                        mean_sil_score = GetSilMeanScore(sil_scores);
-
-                        // obtain best sil score / best k
-                        if(best_sil_score <= mean_sil_score){
-                            best_sil_score = mean_sil_score;
-                            best_k = m;
-                        }
+                        // get discretized data
+                        temp_Ddata = ApplyGOC(temp_classn, temp_RData, k[effind]);
                     }
 
-                    // finally apply GOC using the best k
-                    // get cluster assignments
-                    temp_classn = GetClusterAssignments(temp_pair_data, best_k);
+                    // make a contingency table
+                    temp_tab = tableCpp(temp_Ddata[0], temp_Ddata[1], -1, -1);
 
-                    // get discretized data
-                    temp_Ddata = ApplyGOC(temp_classn, temp_RData, best_k);
+                    // get stats
+                    stat = chisq(temp_tab, p_value, estimate);
 
-                } else if(k.size() == nparents * children.size()){
-                    // if size of k is nparents * nchildren, then it specifies the exact k for each combination
-
-                    // get cluster assignments
-                    temp_classn = GetClusterAssignments(temp_pair_data, k[effind]);
-
-                    // get discretized data
-                    temp_Ddata = ApplyGOC(temp_classn, temp_RData, k[effind]);
+                    // store stats
+                    fill_stat_collector(sc[effind], i, c_indices[c], p_names[i], c_names[c_indices[c]], p_value, estimate);
                 }
-
-                // make a contingency table
-                temp_tab = tableCpp(temp_Ddata[0], temp_Ddata[1], -1, -1);
-
-                // get stats
-                stat = chisq(temp_tab, p_value, estimate);
-
-                // store stats
-                fill_stat_collector(sc[effind], i, c_indices[c], p_names[i], c_names[c_indices[c]], p_value, estimate);
-
             }
 
         } // parents
@@ -244,9 +254,9 @@ vec<stat_collector> coexpnet(const frame<double> & children,
         nthreads = true_threads;
     }
 
-    if(nthreads < 2) {
-        std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
-    }
+    // if(nthreads < 2) {
+    //     std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
+    // }
 
     // create threads
     boost::thread_group threads;
@@ -411,9 +421,9 @@ vec<stat_collector> discrete_coexpnet(const frame<int> & children,
         nthreads = true_threads;
     }
 
-    if(nthreads < 2) {
-        std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
-    }
+    // if(nthreads < 2) {
+    //     std::cout <<"WARNING: No multithreading enabled!"<<std::endl;
+    // }
 
     // create threads
     boost::thread_group threads;

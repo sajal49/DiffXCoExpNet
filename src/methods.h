@@ -75,30 +75,29 @@ void fill_stat_collector(stat_collector & sc, int pindex, int cindex, const std:
 frame<int> tableCpp(vector<int> x_vec, vector<int> y_vec, int xlevels, int ylevels);
 
 // function to print tables
-template <typename T>
-void print_tableCpp(frame<T> table){
-    // For internal use
-
-    // column names
-    std::cout<<"   ";
-    for(int j=0; j<table[0].size(); j++){
-        std::cout<<j<<" ";
-    }
-    std::cout<<std::endl;
-
-    // table
-    for(int i=0; i<table.size(); i++){
-        // rownames
-        std::cout<<i<<": ";
-        for(int j=0; j<table[0].size(); j++){
-            std::cout<<table[i][j]<<" ";
-        }
-        std::cout<<std::endl;
-    }
-
-    std::cout<<std::endl;
-
-}
+// template <typename T>
+// void print_tableCpp(frame<T> table){
+//     // For internal use
+// 
+//     // column names
+//     std::cout<<"   ";
+//     for(int j=0; j<table[0].size(); j++){
+//         std::cout<<j<<" ";
+//     }
+//     std::cout<<std::endl;
+// 
+//     // table
+//     for(int i=0; i<table.size(); i++){
+//         // rownames
+//         std::cout<<i<<": ";
+//         for(int j=0; j<table[0].size(); j++){
+//         }
+//         std::cout<<std::endl;
+//     }
+// 
+//     std::cout<<std::endl;
+// 
+// }
 
 // transpose a frame
 template <typename T>
@@ -114,6 +113,35 @@ frame<T> transpose_frame(frame<T> f){
     }
 
     return tf;
+}
+
+// Find the number of unique samples
+template <typename T>
+int FindUniqueSamples(const frame<T> & data){
+
+    int unq = 0;
+    vec<std::string> seqs(data.size(), "");
+    std::string seq;
+    vec<std::string>::iterator itr;
+
+    for(int i=0; i<data.size(); i++){
+        seq = "";
+        for(int j=0; j<data[i].size(); j++){
+            if(j == (data[i].size()-1)){
+                seq = seq + std::to_string(data[i][j]);
+            } else {
+                seq = seq + std::to_string(data[i][j]) + ",";
+            }
+        }
+        seqs[i] = seq;
+    }
+
+    sort(seqs.begin(), seqs.end());
+    itr = std::unique(seqs.begin(), seqs.end());
+    seqs.resize(std::distance(seqs.begin(), itr));
+    unq = (int) seqs.size();
+
+    return unq;
 }
 
 // segment expression matrix by experimental conditions
@@ -242,7 +270,7 @@ ublas_frame<double> diagonal_mat(const ublas_vec<double> & n, int nrows=-1);
 ublas_frame<double> covariance_matrix(const ublas_vec<double> & b);
 
 // Sharma-Song test
-ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalue, double & estimate);
+ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalue, double & estimate, size_t & df);
 
 // Functions for diffcoexpnet.cpp
 // Worker process -- Discrete differential coexpression network

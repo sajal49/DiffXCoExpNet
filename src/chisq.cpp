@@ -62,8 +62,13 @@ double chisq(const frame<int> & O, ldouble & p_value, double & estimate){
 
   // compute p-value
   df = (nrows - 1) * (ncols - 1);
-  boost::math::chi_squared chidist(df);
-  p_value = boost::math::cdf(boost::math::complement(chidist, chsq));
+  if(df == 0){
+      chsq = 0;
+      p_value = 1;
+  } else {
+      boost::math::chi_squared chidist(df);
+      p_value = boost::math::cdf(boost::math::complement(chidist, chsq));
+  }
 
   return chsq;
 

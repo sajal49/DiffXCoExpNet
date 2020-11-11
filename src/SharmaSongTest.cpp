@@ -7,7 +7,7 @@
 // Sharma-Song test implementation
 // Given 'k' contingency tables representing 'k' experimental conditions
 // the Sharma-Song test returns the amount of second order difference between the tables
-ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalue, double & estimate){
+ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalue, double & estimate, size_t & df){
 
   int k = tables.size(), total_sum=0;
   int temp;
@@ -15,15 +15,6 @@ ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalu
   // Get independent standard normal variables vectors and sample sizes for each table
   vec<int> ssizes(k);
   std::vector<ublas_vec<double > > emat = get_e_matrix(tables, ssizes);
-  size_t df=0;
-
-  // check to see if all ssizes are non-zero
-  for(int i=0; i<k; i++){
-    if(ssizes[i] == 0){
-      std::cerr<<"No table can have 0 sample size. Exiting!"<<std::endl;
-      std::exit(EXIT_FAILURE);
-    }
-  }
 
   // pool emat
   ublas_vec<double> pooled_emat(emat[0].size(), 0);
@@ -112,7 +103,7 @@ ldouble SharmaSongTest(const std::vector<frame<int > > & tables, ldouble & pvalu
   df = R * pooled_emat.size();
 
   // effect size
-  estimate = sqrt(stat/(df*total_sum));
+  estimate = sqrt(stat/(pooled_emat.size()*total_sum));
 
   // chi-squared p-value
   boost::math::chi_squared sharma_song_dist(df);

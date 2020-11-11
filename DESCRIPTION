@@ -1,4 +1,4 @@
-Package: DiffXTablesCoexpnet
+Package: DiffXCoExpNet
 Type: Package
 Title: Building discrete co-expression and differential co-expression networks
 Version: 0.0.1
@@ -26,8 +26,9 @@ Maintainer: Joe Song <joemsong@cs.nmsu.edu>
 Description: A software tool to build discrete differential co-expression networks based on the 
              novel Sharma-Song test of pattern heterogeneity. The tool also builds discrete
              co-expression networks based on the Pearson's chi-squared test.
-Imports: Rcpp, cluster, fossil, dqrng, Rdpack, plotrix, RcppArmadillo
-Suggests: Ckmeans.1d.dp, GridOnClusters, DiffXTables, FunChisq, knitr, 
+Imports: Rcpp, cluster, fossil, dqrng, Rdpack, plotrix, RcppArmadillo, Ckmeans.1d.dp,
+         doParallel, FunChisq, ggplot2
+Suggests: GridOnClusters, DiffXTables, knitr, 
           testthat (>= 2.1.0), rmarkdown 
 Depends: R (>= 3.0)
 RdMacros: Rdpack
