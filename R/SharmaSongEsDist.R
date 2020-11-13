@@ -116,9 +116,9 @@ SimulateDiffInteractions = function(N, n_conditions, nthreads, num,
           
           # compute running difference
           if(sum(difference) == 0){
-            difference = tbs[[ni]]/N[ni]  
+            difference = (tbs[[ni]] - GetExpected(tbs[[ni]]))/N[ni]
           } else {
-            difference = abs((difference/sum(difference)) - (tbs[[ni]]/N[ni]))  
+            difference = abs(difference - ((tbs[[ni]] - GetExpected(tbs[[ni]]))/N[ni]))
           }
             
         }
@@ -176,9 +176,9 @@ SimulateDiffInteractions = function(N, n_conditions, nthreads, num,
           
           # compute running difference
           if(sum(difference) == 0){
-            difference = tbs[[ni]]/N[ni]  
+            difference = (tbs[[ni]] - GetExpected(tbs[[ni]]))/N[ni]
           } else {
-            difference = abs((difference/sum(difference)) - (tbs[[ni]]/N[ni]))  
+            difference = abs(difference - ((tbs[[ni]] - GetExpected(tbs[[ni]]))/N[ni]))  
           }
         }
         
@@ -194,6 +194,22 @@ SimulateDiffInteractions = function(N, n_conditions, nthreads, num,
   
   return(tb_list)
 }
+
+# returns the Pearson's chi-squared test based expected values for a given table
+# tb : a contingency table
+GetExpected = function(tb){
+  
+  # calculate row, column and total sums
+  rsum = rowSums(tb)
+  csum = colSums(tb)
+  tsum = sum(rsum)
+  
+  # calculate expected
+  expected = (rsum %*% t(csum))/tsum
+  
+  return(expected)
+}
+
 
 # Computes sharma-song test statistic, pvalue, estimate and degrees of freedom for a list of 
 # differential tables
